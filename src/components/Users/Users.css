@@ -1,0 +1,28 @@
+.container-Users {
+  margin: 20px;
+  padding: 10px;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+thead {
+  background-color: #313030;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+tr:nth-child(even) {
+  background-color: #dc0e0e;
+}
