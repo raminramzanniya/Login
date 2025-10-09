@@ -26,3 +26,9 @@ th, td {
 tr:nth-child(even) {
   background-color: #dc0e0e;
 }
+.loading {
+  font-size: 20px;
+  text-align: center;
+  margin-top: 50px;
+  color: #555;
+}

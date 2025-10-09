@@ -3,16 +3,27 @@ import './Users.css'
 
 export default function Users() {
   const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true) // اضافه شد
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const res = await fetch('https://admin-p1-default-rtdb.firebaseio.com/users.json')
-      const data = await res.json()
-      setUsers(Object.entries(data))
+      try {
+        const res = await fetch('https://admin-p1-default-rtdb.firebaseio.com/users.json')
+        const data = await res.json()
+        setUsers(Object.entries(data))
+      } catch (err) {
+        console.error("خطا در دریافت کاربران:", err)
+      } finally {
+        setLoading(false) // در هر حالت (چه موفق چه خطا) لودینگ false میشه
+      }
     }
 
     fetchUsers()
   }, [])
+
+  if (loading) {
+    return <div className="loading">در حال بارگذاری...</div> // نمایش پیام هنگام لود
+  }
 
   return (
     <div className='container-Users'>
@@ -31,7 +42,7 @@ export default function Users() {
             <tr key={id}>
               <td>{index + 1}</td>
               <td>{user.firstName}</td>
-              <td>{user.lastName}</td>
+              <td>{user.lastname}</td>
               <td>{user.email}</td>
             </tr>
           ))}
