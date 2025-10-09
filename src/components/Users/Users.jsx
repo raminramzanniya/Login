@@ -3,7 +3,7 @@ import './Users.css'
 
 export default function Users() {
   const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true) // اضافه شد
+  const [loading, setLoading] = useState(true) 
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -14,7 +14,7 @@ export default function Users() {
       } catch (err) {
         console.error("خطا در دریافت کاربران:", err)
       } finally {
-        setLoading(false) // در هر حالت (چه موفق چه خطا) لودینگ false میشه
+        setLoading(false)
       }
     }
 
@@ -22,7 +22,7 @@ export default function Users() {
   }, [])
 
   if (loading) {
-    return <div className="loading">در حال بارگذاری...</div> // نمایش پیام هنگام لود
+    return <div className="loading">در حال بارگذاری...</div>
   }
 
   return (
@@ -42,7 +42,7 @@ export default function Users() {
             <tr key={id}>
               <td>{index + 1}</td>
               <td>{user.firstName}</td>
-              <td>{user.lastname}</td>
+              <td>{user.lastName}</td>
               <td>{user.email}</td>
             </tr>
           ))}
