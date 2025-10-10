@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import { useNavigate } from "react-router-dom";
 import "./Form.css";
 
@@ -88,8 +89,7 @@ export default function Form() {
             <h3>ثبت‌نام با موفقیت انجام شد 🎉</h3>
             <button
               className="form-field"
-              onClick={() => navigate("/Home")}
-            >
+              onClick={() => navigate("/Home")}>
               ورود
             </button>
           </div>
