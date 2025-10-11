@@ -1,42 +1,41 @@
 import React, { useEffect, useState } from "react";
 import "./Users.css";
-import { Modal, Button } from "antd";
+import { Modal, Button, Form, Input, message } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 export default function Users() {
-  // --------------------------
-  // State ها
-  // --------------------------
-  const [users, setUsers] = useState([]); // لیست کاربران
-  const [loading, setLoading] = useState(true); // حالت لودینگ
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // مودال حذف
-  const [selectedUserId, setSelectedUserId] = useState(""); // کاربر انتخاب شده برای حذف
-  const [refreshData, setRefreshData] = useState(false); // برای ری‌لود لیست بعد حذف
+  // state ها
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [refreshData, setRefreshData] = useState(false);
 
-  // --------------------------
-  // گرفتن لیست کاربران از Firebase
-  // --------------------------
+  // فرم کنترل
+  const [form] = Form.useForm();
+
+  // fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        setLoading(true);
         const res = await fetch(
           "https://admin-p1-default-rtdb.firebaseio.com/users.json"
         );
         const data = await res.json();
-        setUsers(Object.entries(data)); // تبدیل به [id, user]
+        if (data) setUsers(Object.entries(data)); // [id, userObj]
+        else setUsers([]);
       } catch (err) {
         console.error("خطا در دریافت کاربران:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchUsers();
-  }, [refreshData]); // هر بار refreshData تغییر کنه دوباره fetch می‌کنه
+  }, [refreshData]);
 
-  // --------------------------
-  // تابع حذف کاربر
-  // --------------------------
+  // حذف کاربر
   const removeHandler = async (userId) => {
     try {
       const res = await fetch(
@@ -44,22 +43,43 @@ export default function Users() {
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("خطا در حذف کاربر");
-      console.log("حذف شد:", userId);
+      message.success("کاربر حذف شد");
+      // رفرش لیست
+      setRefreshData((p) => !p);
     } catch (err) {
       console.error(err);
+      message.error("حذف موفق نبود");
     }
   };
 
-  // --------------------------
-  // نمایش پیام لودینگ قبل از دریافت دیتا
-  // --------------------------
+  // عملکرد submit فرم ویرایش
+  const onFinish = async (values) => {
+    // values: { firstName, lastName, email } (از name های Form.Item)
+    try {
+      const res = await fetch(
+        `https://admin-p1-default-rtdb.firebaseio.com/users/${selectedUserId}.json`,
+        {
+          method: "PATCH", // PATCH برای آپدیت جزئی مناسب است
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        }
+      );
+      if (!res.ok) throw new Error("خطا در ویرایش کاربر");
+      message.success("ویرایش با موفقیت انجام شد");
+      setShowEditModal(false);
+      form.resetFields();
+      setRefreshData((p) => !p);
+    } catch (err) {
+      console.error(err);
+      message.error("ویرایش موفق نبود");
+    }
+  };
+
+  // حالت لودینگ
   if (loading) {
     return <div className="loading">در حال بارگذاری...</div>;
   }
 
-  // --------------------------
-  // JSX اصلی
-  // --------------------------
   return (
     <div className="container-Users">
       <h1 className="title">لیست کاربران</h1>
@@ -86,43 +106,101 @@ export default function Users() {
                   className="delete-icon"
                   onClick={() => {
                     setShowDeleteModal(true);
-                    setSelectedUserId(id); // فقط آیدی رو تنظیم می‌کنیم
+                    setSelectedUserId(id);
                   }}
                 />
-                <EditOutlined className="edit-icon" />
+                <EditOutlined
+                  className="edit-icon"
+                  onClick={() => {
+                    // باز کردن مودال و مقداردهی فرم براساس کاربر انتخابی
+                    setSelectedUserId(id);
+                    form.setFieldsValue({
+                      firstName: user.firstName || "",
+                      lastName: user.lastName || "",
+                      email: user.email || "",
+                    });
+                    setShowEditModal(true);
+                  }}
+                />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* مودال تایید حذف */}
+      {/* مودال حذف */}
       <Modal
         className="container-modal"
-        open={showDeleteModal}
+        open={showDeleteModal} // در AntD از prop "open" استفاده می‌کنیم
         onCancel={() => setShowDeleteModal(false)}
-        footer={null} // حذف footer پیشفرض Ant
+        footer={null}
       >
         <p className="modal-text">آیا از حذف کاربر مطمئن هستید؟</p>
         <div className="modal-buttons">
-          <Button
-            className="cancel-button"
-            onClick={() => setShowDeleteModal(false)}
-          >
+          <Button className="cancel-button" onClick={() => setShowDeleteModal(false)}>
             انصراف
           </Button>
           <Button
-            className="cancel-button" // کلاس CSS شما
+            className="cancel-button"
             danger
             onClick={async () => {
               await removeHandler(selectedUserId);
               setShowDeleteModal(false);
-              setRefreshData((prev) => !prev);
             }}
           >
             حذف
           </Button>
         </div>
+      </Modal>
+
+      {/* مودال ویرایش */}
+      <Modal
+        title="ویرایش کاربر"
+        open={showEditModal} // باید open باشه نه show
+        onCancel={() => {
+          setShowEditModal(false);
+          form.resetFields();
+        }}
+        footer={null}
+      >
+        {/* از Form.Item (نه MyFormItem) استفاده کن */}
+        <Form form={form} name="edit_user" layout="vertical" onFinish={onFinish}>
+          <Form.Item
+            name="firstName"                // ← این همان name ای است که قبلاً خطا می‌دادی
+            label="First Name"
+            rules={[{ required: true, message: "نام را وارد کنید" }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="lastName"
+            label="Last Name"
+            rules={[{ required: true, message: "نام خانوادگی را وارد کنید" }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: "ایمیل را وارد کنید" },
+              { type: "email", message: "فرمت ایمیل صحیح نیست" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+
+          <div className="modal-buttons" >
+            <Button className="cancel-button" onClick={() => { setShowEditModal(false); form.resetFields(); }}>
+              انصراف
+            </Button>
+            <Button className="cancel-button" type="primary" htmlType="submit">
+              ذخیره
+            </Button>
+          </div>
+        </Form>
       </Modal>
     </div>
   );
