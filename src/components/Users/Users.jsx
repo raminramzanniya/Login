@@ -99,7 +99,7 @@ export default function Users() {
             <tr key={id}>
               <td>{index + 1}</td>
               <td>{user.firstName}</td>
-              <td>{user.lastName}</td>
+              <td>{user.lastname}</td>
               <td>{user.email}</td>
               <td className="action-last-td">
                 <DeleteOutlined
